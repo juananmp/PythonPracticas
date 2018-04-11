@@ -4,18 +4,30 @@ if ! [ $(id -u) = 0 ];
   then
   printf "No eres Root, no puedes continuar..."
   exit 1
-
+fi
+#Comprueba que tiene el SSH intalado
+if ! [ $(service ssh status) ];
+  then
+  printf "SSH no esta instalado correctamente, vuelva a instalarlo..."
+  exit 1
 else
   #Array de los administradores
   admins=( jose raul alberto juanan guille )
+  #Reinicia el servico SSH para guardar y ejecutar los cambios
+  /etc/init.d/ssh restart
+  /etc/init.d/ssh start
+  printf "El servicio SSH se ha reiniciado correctamente"
+fi
   #Pregunta si quieres crear los usuarios o generar las claves publica y privada
   read -p "¿Qué acción quieres realizar? (1.Crear usuarios, 2.Generar claves)" opcion
   if [ $opcion = "1" ] then
+      #Pregunta al ususario que puerto ssh quiere utilizar
       read -p "¿Qué puerto quieres utilizar para SSH? (1024-65500)" numero
-      sed "s/22/$numero/g" /home/$user/ssh/sshd_config
+      sed -i "s/#Port/Port/g" /etc/ssh/sshd_config
+      sed -i "s/22/$numero/g" /etc/ssh/sshd_config
       #Bucle que va recorriendo todos los admins del array
-      for user  in "${admins[@]}"
-        doS
+      for user  in "${admins[@]}";
+          do
             #Añade el usuario, con su home, contraseña GonetFPI999,
             #le da persmisos de sudo, guarda su clave publica en el fichero
             useradd -m -p pa3GrE2eHuydo -s /bin/bash "$user"
@@ -40,13 +52,14 @@ else
             printf "Usuario $user añadido."
         done
     printf "Usuarios añadidos correctamente."
+  fi
   if [ $opcion = "2" ] then
     #Bucle que recorre todas las claves del Array
     for user in  "${claves[@]}"
       do
         #Genera las claves publica y privada
         ssh-keygen -f /home/$user/.ssh/clave -t ed2559
-        sed "s/root/$user/g" /home/$user/.ssh/clave.pub
+        sed -i "s/root/$user/g" /home/$user/.ssh/clave.pub
         #Guarda la Clave publica de cada usuario en su variable correspondiente
         case $user in
           jose)
